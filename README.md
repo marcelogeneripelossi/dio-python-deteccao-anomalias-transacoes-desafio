@@ -77,3 +77,64 @@ x_train, x_test, y_train, y_test = train_test_split(
     x, y, stratify=y, test_size=0.3, random_state=42
 )
 ````
+
+### Treinamento do Modelo
+````
+from sklearn.linear_model import LogisticRegression
+
+# Criamos o modelo. O 'max_iter=1000' aumenta o limite de tentativas do algoritmo para convergir, útil em datasets complexos.
+model = LogisticRegression(max_iter=1000)
+
+# O comando .fit() é onde o "aprendizado" acontece: o modelo analisa o treino.
+model.fit(x_train, y_train)
+
+# O .predict() faz o modelo classificar os dados de teste (fraude ou não).
+y_pred = model.predict(x_test)
+````
+
+### Relatório de Desempenho
+````
+from sklearn.metrics import classification_report
+
+# Exibe Precisão, Recall e F1-Score. 
+# O Recall é a métrica mais importante aqui: quanto mais fraudes reais o modelo encontrar, melhor.
+print(classification_report(y_test, y_pred))
+````
+
+### Curva ROC (Avaliação de Capacidade de Separação)
+#### A curva ROC mede o quanto o modelo consegue distinguir entre as duas classes.
+````
+from sklearn.metrics import roc_curve, roc_auc_score
+import matplotlib.pyplot as plt # Corrigido: plt.pyplot
+
+# Pega a probabilidade do modelo de ser fraude (coluna 1)
+y_probs = model.predict_proba(x_test)[:, 1] 
+
+# Calcula as taxas de positivos falsos e verdadeiros
+fpr, tpr, _ = roc_curve(y_test, y_probs)
+
+plt.plot(fpr, tpr)
+plt.title("ROC Curve")
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.show()
+
+# AUC (Área sob a curva) perto de 1 significa um modelo excelente.
+print("AUC", roc_auc_score(y_test, y_probs))
+````
+
+### Curva Precision-Recall
+#### Para datasets desbalanceados (como o de fraudes), esta curva é melhor que a ROC, pois foca no desempenho da classe minoritária (a fraude).
+````
+from sklearn.metrics import precision_recall_curve
+
+# Calcula a relação entre precisão e recall conforme mudamos o limite de corte
+precision, recall, _ = precision_recall_curve(y_test, y_probs)
+
+plt.plot(recall, precision)
+plt.title("Precision-Recall Curve")
+plt.xlabel("Recall")
+plt.ylabel("Precision")
+plt.show()
+````
+
