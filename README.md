@@ -138,3 +138,81 @@ plt.ylabel("Precision")
 plt.show()
 ````
 
+### Balanceamento de Dados (Undersampling e SMOTE)
+O modelo precisa de um terreno equilibrado para aprender.
+- Undersampling: Reduzimos a classe majoritária (normais) para ficar com o mesmo tamanho da minoritária (fraudes). O risco é perder muita informação importante.
+- Oversampling (SMOTE): Em vez de apagar dados, o SMOTE cria dados sintéticos baseados nas fraudes existentes para igualar a quantidade.
+
+````
+from imblearn.over_sampling import SMOTE
+
+# --- Undersampling ---
+# Selecionamos todas as fraudes e uma amostra igual de transações normais
+fraudes = df[df["Class"] == 1]
+normais = df[df["Class"] == 0].sample(len(fraudes), random_state=42)
+
+df_under = pd.concat([fraudes, normais])
+
+# --- SMOTE (Oversampling) ---
+# O SMOTE cria dados sintéticos para equilibrar as classes
+smote = SMOTE()
+X_res, y_res = smote.fit_resample(X, y)
+````
+
+### Random Forest
+
+````
+from sklearn.ensemble import RandomForestClassifier
+
+# O Random Forest é um "comitê" de várias árvores de decisão.
+# 'class_weight="balanced"' avisa ao modelo para dar mais importância aos erros na classe minoritária.
+# 'n_jobs=-1' faz o processamento usar todos os núcleos do seu processador (mais rápido).
+rf = RandomForestClassifier(
+    n_estimators=50,
+    max_depth=10,
+    class_weight="balanced",
+    n_jobs=-1,
+    random_state=42
+)
+
+rf.fit(x_train, y_train)
+
+y_pred_rf = rf.predict(x_test)
+
+print(classification_report(y_test, y_pred_rf))
+````
+
+### Pipeline
+O `Pipeline` é uma boa prática profissional. Ele "empacota" o scaler e o modelo em um único objeto. Isso evita erros ao aplicar a transformação nos dados de teste, garantindo que o modelo use exatamente a mesma escala usada no treino.
+
+````
+from sklearn.pipeline import Pipeline
+
+# Criando o Pipeline
+pipeline = Pipeline([
+    ("scaler", StandardScaler()),
+    ("model", LogisticRegression(max_iter=1000))
+])
+
+pipeline.fit(x_train, y_train)
+y_pred = pipeline.predict(x_test)
+````
+
+### Ajuste de Threshold (Limiar)
+
+````
+# Deixando o threshold em 0.3, estamos sendo mais "agressivos" na detecção. Ou seja, se o modelo tiver apenas 30% de certeza de que é fraude, já vamos alertar. Isso aumenta o Recall (pegamos mais fraudes).
+threshold = 0.3
+
+y_pred_custom = (y_probs > threshold).astype(int)
+
+print(classification_report(y_test, y_pred_custom))
+
+````
+
+
+
+
+
+
+
